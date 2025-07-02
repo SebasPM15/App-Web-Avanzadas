@@ -1,0 +1,40 @@
+services:
+  ms-song:
+    build:
+      context: .                # 👈 ESTÁS EN ESTA CARPETA
+      dockerfile: ms-song/Dockerfile  # 👈 Ruta RELATIVA al context
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db;Database=BDD_PoliMusic_Song;User Id=usr_polimusic_gr2;Password=Politecnica1;Encrypt=False;TrustServerCertificate=True;"
+    networks:
+      - poli-network
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-server2022
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Politecnica1
+      - MSSQL_PID=Express
+    ports:
+      - "14333:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - poli-network
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "SA", "-P", "Politecnica1", "-Q", "SELECT 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sql_data:
+
+networks:
+  poli-network:
+    driver: bridge
